@@ -339,9 +339,9 @@ function convertAsObject<T>(
         // Next, instantiate target object.
         let targetObject: IndexedObject;
 
-        if (typeof sourceObjectMetadata.initializerCallback === 'function') {
+        if (typeof sourceObjectMetadata?.initializerCallback === 'function') {
             try {
-                targetObject = sourceObjectMetadata.initializerCallback(
+                targetObject = sourceObjectMetadata?.initializerCallback(
                     sourceObjectWithDeserializedProperties,
                     sourceObject,
                 );
@@ -351,19 +351,19 @@ function convertAsObject<T>(
                     throw new TypeError(
                         `Cannot deserialize ${memberName}:`
                         + ` 'initializer' function returned undefined/null`
-                        + `, but '${nameof(sourceObjectMetadata.classType)}' was expected.`,
+                        + `, but '${nameof(sourceObjectMetadata?.classType)}' was expected.`,
                     );
-                } else if (!(targetObject instanceof sourceObjectMetadata.classType)) {
+                } else if (!(targetObject instanceof sourceObjectMetadata?.classType)) {
                     throw new TypeError(
                         `Cannot deserialize ${memberName}:`
                         + `'initializer' returned '${nameof(targetObject.constructor)}'`
-                        + `, but '${nameof(sourceObjectMetadata.classType)}' was expected`
+                        + `, but '${nameof(sourceObjectMetadata?.classType)}' was expected`
                         + `, and '${nameof(targetObject.constructor)}' is not a subtype of`
-                        + ` '${nameof(sourceObjectMetadata.classType)}'`,
+                        + ` '${nameof(sourceObjectMetadata?.classType)}'`,
                     );
                 }
             } catch (e) {
-                deserializer.getErrorHandler()(e);
+                deserializer.getErrorHandler()(e as Error);
                 return undefined;
             }
         } else {
@@ -374,7 +374,7 @@ function convertAsObject<T>(
         Object.assign(targetObject, sourceObjectWithDeserializedProperties);
 
         // Call onDeserialized method (if any).
-        const methodName = sourceObjectMetadata.onDeserializedMethodName;
+        const methodName = sourceObjectMetadata?.onDeserializedMethodName;
         if (methodName != null) {
             if (typeof (targetObject as any)[methodName] === 'function') {
                 // check for member first
@@ -385,7 +385,7 @@ function convertAsObject<T>(
             } else {
                 deserializer.getErrorHandler()(new TypeError(
                     `onDeserialized callback`
-                    + `'${nameof(sourceObjectMetadata.classType)}.${methodName}' is not a method.`,
+                    + `'${nameof(sourceObjectMetadata?.classType)}.${methodName}' is not a method.`,
                 ));
             }
         }
@@ -452,7 +452,7 @@ function convertAsArray(
                 memberOptions,
             );
         } catch (e) {
-            deserializer.getErrorHandler()(e);
+            deserializer.getErrorHandler()(e as Error);
 
             // Keep filling the array here with undefined to keep original ordering.
             // Note: this is just aesthetics, not returning anything produces the same result.
@@ -508,7 +508,7 @@ function convertAsSet(
         } catch (e) {
             // Faulty entries are skipped, because a Set is not ordered, and skipping an entry
             // does not affect others.
-            deserializer.getErrorHandler()(e);
+            deserializer.getErrorHandler()(e as Error);
         }
     });
 
@@ -586,7 +586,7 @@ function convertAsMap(
             } catch (e) {
                 // Faulty entries are skipped, because a Map is not ordered,
                 // and skipping an entry does not affect others.
-                deserializer.getErrorHandler()(e);
+                deserializer.getErrorHandler()(e as Error);
             }
         });
     } else {
@@ -616,7 +616,7 @@ function convertAsMap(
             } catch (e) {
                 // Faulty entries are skipped, because a Map is not ordered,
                 // and skipping an entry does not affect others.
-                deserializer.getErrorHandler()(e);
+                deserializer.getErrorHandler()(e as Error);
             }
         });
     }
@@ -646,15 +646,8 @@ function deserializeDate(
         return new Date(sourceObject);
     } else if (typeof sourceObject === 'string') {
         return new Date(sourceObject);
-    } else if (sourceObject instanceof Date) {
-        return sourceObject;
     } else {
-        throwTypeMismatchError(
-            'Date',
-            'an ISO-8601 string',
-            srcTypeNameForDebug(sourceObject),
-            memberName,
-        );
+        return sourceObject;
     }
 }
 

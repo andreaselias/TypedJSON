@@ -44,11 +44,11 @@ export interface ITypedJSONSettings extends OptionsBase {
     mappedTypes?: Map<Serializable<any>, MappedTypeConverters<any>> | null;
 
     /**
-     * Sets a callback that determines the constructor of the correct sub-type of polymorphic
+     * Sets a callback that determines the constructor of the correct subtype of polymorphic
      * objects while deserializing.
      * The default behavior is to read the type-name from the '__type' property of 'sourceObject',
      * and look it up in 'knownTypes'.
-     * The constructor of the sub-type should be returned.
+     * The constructor of the subtype should be returned.
      */
     typeResolver?: TypeResolver | null;
 
@@ -80,7 +80,7 @@ export class TypedJSON<T> {
     private deserializer: Deserializer<T> = new Deserializer<T>();
     private globalKnownTypes: Array<Constructor<any>> = [];
     private indent: number = 0;
-    private rootConstructor: Serializable<T>;
+    private readonly rootConstructor: Serializable<T>;
     private errorHandler: (e: Error) => void;
     private nameResolver: (ctor: Function) => string;
     private replacer?: (key: string, value: any) => any;
@@ -414,7 +414,7 @@ export class TypedJSON<T> {
                 this.getKnownTypes(),
             ) as T;
         } catch (e) {
-            this.errorHandler(e);
+            this.errorHandler(e as Error);
         }
 
         return result;
@@ -465,7 +465,7 @@ export class TypedJSON<T> {
                 ensureTypeDescriptor(this.rootConstructor),
             );
         } catch (e) {
-            this.errorHandler(e);
+            this.errorHandler(e as Error);
         }
     }
 
@@ -487,7 +487,7 @@ export class TypedJSON<T> {
                 createArrayType(ensureTypeDescriptor(this.rootConstructor), dimensions),
             );
         } catch (e) {
-            this.errorHandler(e);
+            this.errorHandler(e as Error);
         }
     }
 
@@ -495,7 +495,7 @@ export class TypedJSON<T> {
         try {
             return this.serializer.convertSingleValue(object, SetT(this.rootConstructor));
         } catch (e) {
-            this.errorHandler(e);
+            this.errorHandler(e as Error);
         }
     }
 
@@ -509,7 +509,7 @@ export class TypedJSON<T> {
                 MapT(keyConstructor, this.rootConstructor),
             );
         } catch (e) {
-            this.errorHandler(e);
+            this.errorHandler(e as Error);
         }
     }
 

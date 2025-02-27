@@ -163,7 +163,7 @@ export class Serializer {
         }
         // if not present in the strategy do property by property serialization
         if (typeof sourceObject === 'object') {
-            return convertAsObject(sourceObject, typeDescriptor, memberName, this, memberOptions);
+            return convertAsObject(sourceObject, typeDescriptor, this);
         }
 
         let error = `Could not serialize '${memberName}'; don't know how to serialize type`;
@@ -183,9 +183,7 @@ export class Serializer {
 function convertAsObject(
     sourceObject: IndexedObject,
     typeDescriptor: ConcreteTypeDescriptor,
-    memberName: string,
     serializer: Serializer,
-    memberOptions?: OptionsBase,
 ) {
     let sourceTypeMetadata: JsonObjectMetadata | undefined;
     let targetObject: IndexedObject;
@@ -380,66 +378,66 @@ function convertAsSet(
 }
 
 /**
- * Performs the conversion of a map of typed objects (or primitive values) into an array
- * of simple javascript objects with `key` and `value` properties.
+ * Converts a map of typed objects (or primitive values) into an array of simple objects
+ * with `key` and `value` properties, or an indexed object if required.
  */
 function convertAsMap(
     sourceObject: Map<any, any>,
     typeDescriptor: TypeDescriptor,
     memberName: string,
     serializer: Serializer,
-    memberOptions?: OptionsBase,
-): IndexedObject | Array<{key: any; value: any}> {
+    memberOptions?: OptionsBase
+): IndexedObject | Array<{ key: any; value: any }> {
     if (!(typeDescriptor instanceof MapTypeDescriptor)) {
         throw new TypeError(
-            `Could not serialize ${memberName} as Map: incorrect TypeDescriptor detected, please`
-            + ' use proper annotation or function for this type',
-        );
-    }
-    if (typeDescriptor.valueType as any == null) { // @todo Check type
-        throw new TypeError(
-            `Could not serialize ${memberName} as Map: missing value type definition.`,
+            `Could not serialize ${memberName} as Map: incorrect TypeDescriptor detected. ` +
+            `Please use a proper annotation or function for this type.`
         );
     }
 
-    if (typeDescriptor.keyType as any == null) { // @todo Check type
+    if (!typeDescriptor.valueType) {
         throw new TypeError(
-            `Could not serialize ${memberName} as Map: missing key type definition.`,
+            `Could not serialize ${memberName} as Map: missing value type definition.`
+        );
+    }
+
+    if (!typeDescriptor.keyType) {
+        throw new TypeError(
+            `Could not serialize ${memberName} as Map: missing key type definition.`
         );
     }
 
     const keyMemberName = `${memberName}[].key`;
     const valueMemberName = `${memberName}[].value`;
     const resultShape = typeDescriptor.getCompleteOptions().shape;
-    const result = resultShape === MapShape.OBJECT ? ({} as IndexedObject) : [];
+    const result: IndexedObject | Array<{ key: any; value: any }> =
+        resultShape === MapShape.OBJECT ? {} : [];
     const preserveNull = serializer.retrievePreserveNull(memberOptions);
 
-    // Convert each *entry* in the map to a simple javascript object with key and value properties.
     sourceObject.forEach((value, key) => {
-        const resultKeyValuePairObj = {
-            key: serializer.convertSingleValue(
-                key,
-                typeDescriptor.keyType,
-                keyMemberName,
-                memberOptions,
-            ),
-            value: serializer.convertSingleValue(
-                value,
-                typeDescriptor.valueType,
-                valueMemberName,
-                memberOptions,
-            ),
-        };
+        const convertedKey = serializer.convertSingleValue(
+            key,
+            typeDescriptor.keyType,
+            keyMemberName,
+            memberOptions
+        );
 
-        // We are not going to emit entries with undefined keys OR undefined values.
-        const keyDefined = isValueDefined(resultKeyValuePairObj.key);
-        const valueDefined = (resultKeyValuePairObj.value === null && preserveNull)
-            || isValueDefined(resultKeyValuePairObj.value);
+        const convertedValue = serializer.convertSingleValue(
+            value,
+            typeDescriptor.valueType,
+            valueMemberName,
+            memberOptions
+        );
+
+        // Only add entries where both key and value are defined
+        const keyDefined = isValueDefined(convertedKey);
+        const valueDefined = convertedValue === null ? preserveNull : isValueDefined(convertedValue);
+
         if (keyDefined && valueDefined) {
             if (resultShape === MapShape.OBJECT) {
-                result[resultKeyValuePairObj.key] = resultKeyValuePairObj.value;
+                (result as IndexedObject)[convertedKey] = convertedValue;
             } else {
-                result.push(resultKeyValuePairObj);
+                (result as Array<{ key: any; value: any }>).push({ key: convertedKey, value: convertedValue });
             }
         }
     });
