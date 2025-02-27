@@ -28,11 +28,11 @@ export interface ITypedJSONSettings extends OptionsBase {
      */
     mappedTypes?: Map<Serializable<any>, MappedTypeConverters<any>> | null;
     /**
-     * Sets a callback that determines the constructor of the correct sub-type of polymorphic
+     * Sets a callback that determines the constructor of the correct subtype of polymorphic
      * objects while deserializing.
      * The default behavior is to read the type-name from the '__type' property of 'sourceObject',
      * and look it up in 'knownTypes'.
-     * The constructor of the sub-type should be returned.
+     * The constructor of the subtype should be returned.
      */
     typeResolver?: TypeResolver | null;
     nameResolver?: ((ctor: Function) => string) | null;
@@ -56,7 +56,7 @@ export declare class TypedJSON<T> {
     private deserializer;
     private globalKnownTypes;
     private indent;
-    private rootConstructor;
+    private readonly rootConstructor;
     private errorHandler;
     private nameResolver;
     private replacer?;

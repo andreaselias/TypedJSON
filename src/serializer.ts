@@ -457,7 +457,7 @@ function convertAsTypedArray(sourceObject: ArrayBufferView) {
 /**
  * Performs the conversion of a raw ArrayBuffer to a string.
  */
-function convertAsArrayBuffer(buffer: ArrayBuffer) {
+function convertAsArrayBuffer(buffer: ArrayBufferLike) {
     // ArrayBuffer -> 16-bit character codes -> character array -> joined string.
     return Array.from(new Uint16Array(buffer))
         .map(charCode => String.fromCharCode(charCode)).join('');
